@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Timer</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+      background: #ffffff;
+      color: #1a1a1a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      user-select: none;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 48px;
+    }
+
+    /* Time display */
+    .display {
+      font-size: clamp(80px, 20vw, 160px);
+      font-weight: 200;
+      letter-spacing: -0.03em;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+      transition: color 0.3s ease;
+    }
+
+    .display.finished {
+      animation: pulse-red 0.8s ease-in-out infinite alternate;
+    }
+
+    @keyframes pulse-red {
+      from { color: #1a1a1a; }
+      to   { color: #e53e3e; }
+    }
+
+    /* Input row */
+    .input-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      opacity: 1;
+      transition: opacity 0.2s;
+    }
+
+    .input-row.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .time-input {
+      width: 56px;
+      text-align: center;
+      border: none;
+      border-bottom: 1.5px solid #d0d0d0;
+      font-size: 18px;
+      font-family: inherit;
+      color: #1a1a1a;
+      background: transparent;
+      padding: 4px 0;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .time-input:focus {
+      border-color: #1a1a1a;
+    }
+
+    .time-input::placeholder {
+      color: #c0c0c0;
+    }
+
+    .sep {
+      font-size: 18px;
+      color: #c0c0c0;
+    }
+
+    .input-label {
+      font-size: 12px;
+      color: #a0a0a0;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* Controls */
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+
+    .btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: transform 0.15s ease, opacity 0.15s;
+    }
+
+    .btn:active {
+      transform: scale(0.9);
+    }
+
+    .btn-primary {
+      width: 72px;
+      height: 72px;
+      background: #1a1a1a;
+      color: #ffffff;
+    }
+
+    .btn-primary:hover {
+      background: #333;
+    }
+
+    .btn-secondary {
+      width: 48px;
+      height: 48px;
+      color: #a0a0a0;
+    }
+
+    .btn-secondary:hover {
+      color: #1a1a1a;
+    }
+
+    .btn svg {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="display" id="display">25:00</div>
+
+  <div class="input-row" id="inputRow">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+      <input class="time-input" id="minInput" type="number" min="0" max="99" placeholder="25">
+      <span class="input-label">min</span>
+    </div>
+    <span class="sep">:</span>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+      <input class="time-input" id="secInput" type="number" min="0" max="59" placeholder="00">
+      <span class="input-label">sec</span>
+    </div>
+  </div>
+
+  <div class="controls">
+    <!-- Reset -->
+    <button class="btn btn-secondary" id="resetBtn" aria-label="Reset">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="1 4 1 10 7 10"/>
+        <path d="M3.51 15a9 9 0 1 0 .49-4.87"/>
+      </svg>
+    </button>
+
+    <!-- Play / Pause -->
+    <button class="btn btn-primary" id="playBtn" aria-label="Start">
+      <!-- Play icon (default) -->
+      <svg id="iconPlay" width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+        <polygon points="5,3 19,12 5,21"/>
+      </svg>
+      <!-- Pause icon (hidden) -->
+      <svg id="iconPause" width="28" height="28" viewBox="0 0 24 24" fill="currentColor" style="display:none">
+        <rect x="6" y="4" width="4" height="16" rx="1"/>
+        <rect x="14" y="4" width="4" height="16" rx="1"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<script>
+  const display   = document.getElementById('display');
+  const inputRow  = document.getElementById('inputRow');
+  const minInput  = document.getElementById('minInput');
+  const secInput  = document.getElementById('secInput');
+  const playBtn   = document.getElementById('playBtn');
+  const resetBtn  = document.getElementById('resetBtn');
+  const iconPlay  = document.getElementById('iconPlay');
+  const iconPause = document.getElementById('iconPause');
+
+  const DEFAULT_SECONDS = 25 * 60;
+
+  let totalSeconds  = DEFAULT_SECONDS;
+  let remaining     = DEFAULT_SECONDS;
+  let intervalId    = null;
+  let running       = false;
+  let finished      = false;
+
+  function fmt(s) {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+  }
+
+  function render() {
+    display.textContent = fmt(remaining);
+    document.title = running ? `▶ ${fmt(remaining)}` : `Timer — ${fmt(remaining)}`;
+  }
+
+  function setRunning(state) {
+    running = state;
+    iconPlay.style.display  = running ? 'none' : 'block';
+    iconPause.style.display = running ? 'block' : 'none';
+    inputRow.classList.toggle('hidden', running);
+  }
+
+  function getInputSeconds() {
+    const m = parseInt(minInput.value) || 0;
+    const s = parseInt(secInput.value) || 0;
+    return Math.max(1, m * 60 + s);
+  }
+
+  function start() {
+    if (finished) reset();
+
+    if (!running) {
+      // If the timer is at total (i.e. freshly set), read inputs
+      if (remaining === totalSeconds && !intervalId) {
+        totalSeconds = getInputSeconds();
+        remaining    = totalSeconds;
+      }
+      setRunning(true);
+      intervalId = setInterval(tick, 1000);
+    }
+  }
+
+  function pause() {
+    clearInterval(intervalId);
+    intervalId = null;
+    setRunning(false);
+    render();
+  }
+
+  function tick() {
+    if (remaining <= 0) {
+      clearInterval(intervalId);
+      intervalId = null;
+      setRunning(false);
+      finished = true;
+      display.classList.add('finished');
+      document.title = '⏰ Time\'s up!';
+      return;
+    }
+    remaining--;
+    render();
+  }
+
+  function reset() {
+    clearInterval(intervalId);
+    intervalId = null;
+    finished   = false;
+    display.classList.remove('finished');
+    totalSeconds = getInputSeconds();
+    remaining    = totalSeconds;
+    setRunning(false);
+    render();
+  }
+
+  playBtn.addEventListener('click', () => {
+    if (running) pause(); else start();
+  });
+
+  resetBtn.addEventListener('click', reset);
+
+  // Live-update display from inputs when stopped
+  [minInput, secInput].forEach(el => {
+    el.addEventListener('input', () => {
+      if (!running) {
+        totalSeconds = getInputSeconds();
+        remaining    = totalSeconds;
+        render();
+      }
+    });
+  });
+
+  // Spacebar shortcut
+  document.addEventListener('keydown', e => {
+    if (e.code === 'Space' && e.target === document.body) {
+      e.preventDefault();
+      if (running) pause(); else start();
+    }
+    if (e.code === 'KeyR' && e.target === document.body) reset();
+  });
+
+  render();
+</script>
+</body>
+</html>
