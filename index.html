@@ -13,8 +13,8 @@
 
     body {
       font-family: "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
-      background: #ffffff;
-      color: #1a1a1a;
+      background: #f0f7ff;
+      color: #1a6fc4;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -44,7 +44,7 @@
     }
 
     @keyframes pulse-red {
-      from { color: #1a1a1a; }
+      from { color: #1a6fc4; }
       to   { color: #e53e3e; }
     }
 
@@ -66,10 +66,10 @@
       width: 56px;
       text-align: center;
       border: none;
-      border-bottom: 1.5px solid #d0d0d0;
+      border-bottom: 1.5px solid #a8cff0;
       font-size: 18px;
       font-family: inherit;
-      color: #1a1a1a;
+      color: #1a6fc4;
       background: transparent;
       padding: 4px 0;
       outline: none;
@@ -77,21 +77,21 @@
     }
 
     .time-input:focus {
-      border-color: #1a1a1a;
+      border-color: #1a6fc4;
     }
 
     .time-input::placeholder {
-      color: #c0c0c0;
+      color: #a8cff0;
     }
 
     .sep {
       font-size: 18px;
-      color: #c0c0c0;
+      color: #90b8e0;
     }
 
     .input-label {
       font-size: 12px;
-      color: #a0a0a0;
+      color: #90b8e0;
       letter-spacing: 0.08em;
       text-transform: uppercase;
     }
@@ -121,22 +121,22 @@
     .btn-primary {
       width: 72px;
       height: 72px;
-      background: #1a1a1a;
+      background: #1a6fc4;
       color: #ffffff;
     }
 
     .btn-primary:hover {
-      background: #333;
+      background: #155aa0;
     }
 
     .btn-secondary {
       width: 48px;
       height: 48px;
-      color: #a0a0a0;
+      color: #90b8e0;
     }
 
     .btn-secondary:hover {
-      color: #1a1a1a;
+      color: #1a6fc4;
     }
 
     .btn svg {
@@ -147,11 +147,11 @@
 <body>
 
 <div class="container">
-  <div class="display" id="display">25:00</div>
+  <div class="display" id="display">60:00</div>
 
   <div class="input-row" id="inputRow">
     <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
-      <input class="time-input" id="minInput" type="number" min="0" max="99" placeholder="25">
+      <input class="time-input" id="minInput" type="number" min="0" max="99" placeholder="60">
       <span class="input-label">min</span>
     </div>
     <span class="sep">:</span>
@@ -195,7 +195,7 @@
   const iconPlay  = document.getElementById('iconPlay');
   const iconPause = document.getElementById('iconPause');
 
-  const DEFAULT_SECONDS = 25 * 60;
+  const DEFAULT_SECONDS = 60 * 60;
 
   let totalSeconds  = DEFAULT_SECONDS;
   let remaining     = DEFAULT_SECONDS;
